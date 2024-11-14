@@ -1,92 +1,141 @@
 # Name:         Sofia Mancini
 # Class:        CSC 110 - Spring 2024
-# Assignment:   Programming Project Design
-# Due Date:     03/29/2024
+# Assignment:   Programming Project Implementation
+# Due Date:     04/29/2024
 
-# Program Title: Wordle Design
+# Program Title: Wordle Implementation
 
 # Program Description: 
 # ---------------------
 # This program will generate a random 5 letter word and then the player will make guesses based on clues provided by the program.
 # The program will keep track of the score and provide clues to the user.
 
-# General Solution:
-# -----------------
-# Continuously compare the users guesses ot a randomly generated 5 letter word.
-# Provide clues to the user based on their guesses and keep track of the score.
 
-# Pseudocode:
-# ----------
-# Have the program generate a random 5 letter word
-# Ask the user for their first guess
-# Check that the word is in the list
-# Check that the word hasn't been guessed before
-# Keep track of the guesses and provide clues
-#  - If the letter is in the word, in the correct location, return a 'G'
-#  - If the letter is in the word, but in the wrong location, return a 'Y'
-#  - If the letter is not in the word, display a 'X'
-# Display the clues
-# Keep track of the number of guesses
-# If the word is not guessed in 6 tries print 'Word not found' and the word
-# If the word is guessed print 'Nice Job'
-# Display the score and ask the user if they would like to play again
-# Scoring scheme: score = number of guesses
-# If not guessed score = 10
-# ** Make sure score does not reset until user stops playing **
+import random
 
 
-# Function Design:
-# ----------------
-
-# Function to open the file and check the given file name
+# This function will open the file and check the given file name
 def openFile():
-    # Open the file and check the given file name
+    goodFile = False
+    while goodFile == False:
+        fname = input("Please enter a file name: ")
+        try:
+            dataFile = open(fname, "r")
+            goodFile = True
+        except IOError:
+            print("Invalid file name try again ...")
     return dataFile
 
-# Function to read in the data from the file and store in a list
+# Function to read in the data from the file
 def getData ():
-    # Read in the data from the file and store in a list
+    inFile = openFile()
+    wordList = []
+    # Skip the header line
+    headers = next(inFile)
+    for line in inFile:
+        line = line.strip()
+        word = line
+        wordList.append(word)
+    
+    inFile.close()
     return wordList
 
 # Function to generate a random 5 letter word
-def generateWord():
-    # Generate a random 5 letter word
+def generateWord(wordList):
+    # Pulls a random word from the list
+    wordIndex = random.randint(0, len(wordList) - 1)
+    # Returns the word at the index (-1 to match the list index)
+    word = wordList[wordIndex - 1]
     return word
 
 # Function to get the user's guess
-def getGuess():
-    # Ask the user for their guess
-    # If the word is not in the list, ask the user to try again, this is not counted as a guess
-    # If the word has been guessed before, ask the user to try again, this is not counted as a guess
-    # Store the first good guess in an empty list and count it as a guess
-    return guess
+def getGuess(wordList, guessList):
+    while True:
+        guess = input("Make a guess: ").upper()
+        if guess not in wordList:
+            print('Word not in dictionary - try again... ')
+        elif guess in guessList:
+            print("You have already guessed that word, try again ...")
+        else:
+            return guess
 
-# Function to keep track of the guesses and provide clues
-def computeClues(word, guess):
-    # Create an empty string to store the clues
-    # If the letter is in the word, in the correct location, return a 'G'
-    # If the letter is in the word, but in the wrong location, return a 'Y'
-    # If the letter is not in the word, display a 'X'
-    # Display the clues
+# Function to compute the clue based on the user's guess
+def computeClue(guess, word):
+    clue = ""
+    # Empty list to keep track of the location of the correctly guessed letters in the word
+    matched_letters = [] 
+    for i in range(len(word)):
+        if guess[i] == word[i]:
+            clue += 'G'
+            matched_letters.append(i)
+        # Checks if the letter is in the word but not in the correct location
+        # Then checks if the letter has already been placed correctly in another spot using the matched_letters list
+        elif guess[i] in word and word.index(guess[i]) not in matched_letters:
+            # Accounts for double letters and returns 'X' if the letter has already been placed correctly in another spot
+            if guess.count(guess[i]) > word.count(guess[i]):
+                clue += 'X'
+            else:
+                clue += 'Y'
+            matched_letters.append(word.index(guess[i]))
+        else:
+            clue += 'X'
     return clue
 
-# Function to keep track of the score
-def computeScore(guesses):
-    # Keep track of the number of guesses
-    # Display the score and ask the user if they would like to play again
-    # Scoring scheme: score = number of guesses
-    # If not guessed score = 10
-    # Score counts until user stops playing (can go multiple rounds)
-    return score
+def main(seedIn):
+    # Initialize variables
+    gameScore = 0
+    random.seed(seedIn)
 
-# Function to print the results of the game
-def printResults(word, guess):
-    # If the word is not guessed print 'Sorry, you did not guess the word: + word'
-    # If the word is guessed print 'Congratulations, your wordle score for this game is: + score'
-    # Display the score and ask the user if they would like to play again
-    return
+    # Generate a list of words
+    wordList = getData()
+    # Keeps track of the game vs the round
+    playAgain = 'Y'
 
-# Main Function:
-def main ():
-    # Call the other functions
-    return
+    # Game loop to ensure the player can play multiple rounds
+    while playAgain.upper() == 'Y':
+        word = generateWord(wordList)
+        guessList = []
+        guessCount = 1
+        roundScore = 1
+
+        guess = getGuess(wordList, guessList)
+
+        # Loop to keep track of the guesses and provide clues
+        while guess != word and guessCount < 6:
+            guessList.append(guess)
+            # Increment score for each guess
+            guessCount += 1
+            roundScore += 1
+            clue = computeClue(guess, word)
+            print(guess)
+            print(clue)
+            guess = getGuess(wordList, guessList)
+        
+        # Condition if the word is guessed correctly
+        if guess == word:
+            clue = computeClue(guess, word)
+            print(guess)
+            print(clue)
+            print()
+            print('Congratulations, your wordle score for this game is ', roundScore)
+            # Increment the overall score
+            gameScore += roundScore
+            print('Your overall score is ', gameScore)
+            print()
+        # Condition if the word is not guessed correctly in 6 guesses
+        else:
+            print(guess)
+            clue = computeClue(guess, word)
+            print(clue)
+            print("Sorry, you did not guess the word: ", word)
+            roundScore = 10
+            gameScore += roundScore
+            print('Your overall score is ', gameScore)
+            print()
+
+        # Either end the while loop and end the game or reset the game while gameScore continues to increment 
+        playAgain = input('Would you like to play again (Y or N)? ')
+
+    print('Thanks for playing!')
+
+# main(2)
